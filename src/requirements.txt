@@ -1,5 +1,4 @@
 fastapi
 uvicorn
 numpy
-matplotlib
-cv2
+opencv-contrib-python
