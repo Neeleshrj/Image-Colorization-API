@@ -3,4 +3,3 @@ uvicorn
 numpy
 opencv-contrib-python
 mega.py
-gunicorn

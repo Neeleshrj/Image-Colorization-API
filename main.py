@@ -8,8 +8,10 @@ app = FastAPI()
 
 mega = Mega()
 m = mega.login()
-
-m.download_url('https://mega.nz/file/EMl2FAqR#f54U3M3-s7eMz-YAnsGvzqp1NsJkJme74UT0Tf9_Haw',"./model/")
+try:
+    m.download_url('https://mega.nz/file/EMl2FAqR#f54U3M3-s7eMz-YAnsGvzqp1NsJkJme74UT0Tf9_Haw',"./model/")
+except PermissionError:
+    print("File is being used but that's okay since the file might be already downloaded")
 
 class UserIn(BaseModel):
     imgObject: str
