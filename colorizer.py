@@ -16,8 +16,8 @@ def image_colorizer(datauri):
     points = "./model/pts_in_hull.npy"
     image = data_uri_to_cv2_img(datauri)
     
-    net = cv2.dnn.readNetFromCaffe(prototxt, model)
-    pts = np.load(points)
+    net = cv2.dnn.readNetFromCaffe(prototxt, model) #load model
+    pts = np.load(points) #load cluster
 
     class8 = net.getLayerId("class8_ab")
     conv8 = net.getLayerId("conv8_313_rh")
@@ -25,25 +25,28 @@ def image_colorizer(datauri):
     net.getLayer(class8).blobs = [pts.astype("float32")]
     net.getLayer(conv8).blobs = [np.full([1, 313], 2.606, dtype="float32")]
 
+    #convert image from bgr to greyscale to clean certain things and back to rgb
     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
 
+    #scaling(normalizing the image) by dividing everything by 255
     scaled = image.astype("float32") / 255.0
-    lab = cv2.cvtColor(scaled, cv2.COLOR_RGB2LAB)
-    resized = cv2.resize(lab, (224, 224))
-    L = cv2.split(resized)[0]
+    lab = cv2.cvtColor(scaled, cv2.COLOR_RGB2LAB) #converting RGB to LAB
+    resized = cv2.resize(lab, (224, 224)) 
+    L = cv2.split(resized)[0] #extracting L value
     L -= 50
     
-    net.setInput(cv2.dnn.blobFromImage(L))
-    ab = net.forward()[0, :, :, :].transpose((1, 2, 0))
-    ab = cv2.resize(ab, (image.shape[1], image.shape[0]))
+    #set input as L to get predicted a and b
+    net.setInput(cv2.dnn.blobFromImage(L)) 
+    ab = net.forward()[0, :, :, :].transpose((1, 2, 0)) #find a and b 
+    ab = cv2.resize(ab, (image.shape[1], image.shape[0])) #resize again after prediction to original
 
     L = cv2.split(lab)[0]
-    colorized = np.concatenate((L[:, :, np.newaxis], ab), axis=2)
+    colorized = np.concatenate((L[:, :, np.newaxis], ab), axis=2) #concat the a and b values to image
 
-    colorized = cv2.cvtColor(colorized, cv2.COLOR_LAB2BGR)
-    colorized = np.clip(colorized, 0, 1)
-    colorized = (255 * colorized).astype("uint8")
+    colorized = cv2.cvtColor(colorized, cv2.COLOR_LAB2BGR) #convert LAB to BGR (since opencv works in BGR not RGB)
+    colorized = np.clip(colorized, 0, 1) #limiting values in the nparray (image)
+    colorized = (255 * colorized).astype("uint8") #changing pixel intensity back to 255
 
     cv2.imshow('image',colorized)
     cv2.waitKey(0)
